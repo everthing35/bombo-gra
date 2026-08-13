@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Wybuchowa Bomba - Online</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; }
+        .player { padding: 10px; margin: 5px; background: #333; border-radius: 5px; }
+        .has-bomb { border: 3px solid #ff4757; background: #552222; }
+    </style>
+</head>
+<body>
+    <h1>💣 Wybuchowa Bomba</h1>
+    <div id="lobby">
+        <input id="nick" placeholder="Nick">
+        <input id="room" placeholder="ID Pokoju">
+        <button onclick="join()">Dołącz</button>
+    </div>
+    <div id="game" style="display:none;">
+        <div id="playerList"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        let myId = '';
+
+        function join() {
+            socket.emit('joinRoom', { roomCode: document.getElementById('room').value, nickname: document.getElementById('nick').value });
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+        }
+
+        socket.on('updatePlayers', (players) => {
+            renderPlayers(players, 0);
+        });
+
+        socket.on('nextTurn', ({ currentPlayerIndex, players }) => {
+            renderPlayers(players, currentPlayerIndex);
+        });
+
+        function renderPlayers(players, bombIndex) {
+            const list = document.getElementById('playerList');
+            list.innerHTML = players.map((p, i) => `
+                <div class="player ${i === bombIndex ? 'has-bomb' : ''}">
+                    ${p.name} ${i === bombIndex ? ' (MA BOMBĘ! 💣)' : ''} - Życia: ${'❤️'.repeat(p.lives)}
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
